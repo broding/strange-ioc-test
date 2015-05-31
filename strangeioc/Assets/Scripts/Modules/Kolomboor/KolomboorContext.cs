@@ -6,7 +6,7 @@ using strange.extensions.command.impl;
 
 public class KolomboorContext : ModuleContext {
 
-    public KolomboorContext(ContextView view)
+    public KolomboorContext(ModuleRoot view)
         : base(view) {
 
     }

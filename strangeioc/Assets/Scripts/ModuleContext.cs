@@ -6,26 +6,74 @@ using System;
 using System.Linq;
 using strange.extensions.command.impl;
 using System.Collections.Generic;
+using strange.extensions.mediation.impl;
+using System.Reflection.Emit;
+using System.Threading;
+using System.Linq;
+using strange.extensions.signal.impl;
+using System.Collections.ObjectModel;
 
 public class ModuleContext : MVCSContext {
 
-    public ModuleContext(ContextView view)
+    public ModuleContext(ModuleRoot view)
         : base(view) {
-
     }
 
-    protected override void mapBindings() {
-        base.mapBindings();
+    protected override void postBindings()
+    {
+        base.postBindings();
 
-        IEnumerable<Type> types = GetTypesInNamespace(typeof(Command));
+        ModuleRoot moduleRoot = (contextView as GameObject).GetComponent<ModuleRoot>();
 
-        foreach (Type type in types) {
-            Debug.Log(type);
+        foreach (ModuleRoot.CommandSignalConnection con in moduleRoot.Connections) {
+            Debug.Log(con.SignalField.Field);
+            Type newType = CreateSignalType(con.SignalField.Field.FieldType, con.SignalField.Name);
+            BaseSignal newSignal = (BaseSignal)Activator.CreateInstance(newType);
+            ReplaceSignal(con.SignalField.View, con.SignalField.Field.GetValue(con.SignalField.View) as BaseSignal, newSignal);
+            Debug.Log(newSignal.GetType());
         }
+
+
+
+        /*
+        List<BaseSignal> signals = new List<BaseSignal>();
+
+        foreach (SignalsMediator mediator in mediators)
+        {
+            foreach (KeyValuePair<string, BaseSignal> pair in mediator.Signals) {
+                Type type = CreateSignalType(pair.Value.GetType(), mediator.gameObject.name + "_" + pair.Key);
+
+                BaseSignal newSignal = (BaseSignal)Activator.CreateInstance(type);
+                if (ReplaceSignal(mediator, pair.Value, newSignal)) {
+                    signals.Add(newSignal);
+                }else{
+                    throw new Exception("Could not replace the newly created signal called: " + newSignal.GetType().Name);
+                }
+            }
+        }
+         */
     }
 
-    private IEnumerable<Type> GetTypesInNamespace(Type type) {
-        return AppDomain.CurrentDomain.GetAssemblies().SelectMany(s => s.GetTypes()).Where(p => type.IsAssignableFrom(p));
+    private bool ReplaceSignal(SignalsView view, BaseSignal oldSignal, BaseSignal newSignal) {
+        foreach (FieldInfo field in view.GetType().GetFields()) {
+            if (field.GetValue(view) == oldSignal) {
+                field.SetValue(view, newSignal);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private Type CreateSignalType(Type signalType, string name) {
+        AssemblyName assemblyName = new AssemblyName();
+        assemblyName.Name = "tmpAssembly";
+        AssemblyBuilder assemblyBuilder = Thread.GetDomain().DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
+        ModuleBuilder module = assemblyBuilder.DefineDynamicModule("tmpModule");
+        TypeBuilder typeBuilder = module.DefineType(name, TypeAttributes.Public | TypeAttributes.Class, signalType);
+
+        Type generatedType = typeBuilder.CreateType();
+        return generatedType;
     }
 }
 

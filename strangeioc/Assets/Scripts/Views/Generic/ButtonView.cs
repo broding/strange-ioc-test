@@ -3,10 +3,13 @@ using System.Collections;
 using strange.extensions.mediation.impl;
 using strange.extensions.signal.impl;
 
-public class ButtonView : SignalView<Signal> {
+public class ButtonView : SignalsView {
+
+    [ModuleSignal("OnButtonPressed")]
+    public Signal OnButtonPressedSignal = new Signal();
 
     void OnMouseDown() {
-        Signal.Dispatch();
+        OnButtonPressedSignal.Dispatch();
     }
 
 }

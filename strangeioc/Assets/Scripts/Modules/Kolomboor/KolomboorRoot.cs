@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-class KolomboorRoot : ContextView {
+class KolomboorRoot : ModuleRoot {
 
     private void Awake() {
         context = new KolomboorContext(this);

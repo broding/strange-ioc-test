@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
-public class SliderView : SignalView<Signal<float>> {
+public class SliderView : View {
 
     public SliderHandleScript Handle;
 
@@ -16,6 +16,6 @@ public class SliderView : SignalView<Signal<float>> {
     }
 
     private void OnHandleReleased() {
-        Signal.Dispatch(UnityEngine.Random.Range(0, 100));
+        // doe ff naar mediator praten
     }
 }
